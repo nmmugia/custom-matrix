@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <template id="matrix_custom" inherit_id="survey.matrix">
+            <xpath expr="//table" position="replace">
+                <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th> </th>
+                        <th t-foreach="question.labels_ids" t-as="col_label"><span t-field="col_label.value" /></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr t-foreach="question.labels_ids_2" t-as="row_label">
+                        <th><span t-field="row_label.value" /></th>
+                        <td t-foreach="question.labels_ids" t-as="col_label">
+                            <input t-if="question.matrix_subtype == 'simple'" type="radio" t-att-name="'%s_%s' % (prefix, row_label.id)" t-att-value='col_label.id' />
+                            <t t-if="question.matrix_subtype == 'custom_row'">
+                                <t t-if="col_label.type == 'textbox'">
+                                    <input type="text" class="form-control" t-att-name="'%s_%s_%s' % (prefix, row_label.id, col_label.id)"/>
+                                </t>
+                                <t t-if="col_label.type == 'free_text'">
+                                    <textarea class="form-control" rows="3" t-att-name="'%s_%s_%s' % (prefix, row_label.id, col_label.id)"></textarea>
+                                </t>
+                                <t t-if="col_label.type == 'numerical_box'">
+                                   <input type="number" step="any" class="form-control" t-att-name="'%s_%s_%s' % (prefix, row_label.id, col_label.id)"/>
+                                </t>
+                                <t t-if="col_label.type == 'date'">
+                                    <div class='input-group date'>
+                                        <input type="text" date="true" class="form-control date" t-att-name="'%s_%s_%s' % (prefix, row_label.id, col_label.id)"/>
+                                    </div>
+                                </t>
+                                <t t-if="col_label.type == 'dropdown'">
+                                    <select t-att-name="'%s_%s_%s' % (prefix, row_label.id, col_label.id)" class="form-control" id="seldpbox1">
+                                        <option></option>
+                                        <t t-foreach="col_label.dpvalues" t-as="dpv">
+                                            <option t-att-value="dpv.id"><t t-esc="dpv.name"/></option>
+                                        </t>
+                                    </select> 
+                                </t>
+                                <t t-if="col_label.type == 'checkbox'">
+                                    <input type="checkbox" t-att-name="'%s_%s_%s' % (prefix, row_label.id, col_label.id)" t-att-value='col_label.id' />
+                                </t>
+                            </t>
+                            <input t-if="question.matrix_subtype == 'multiple'" type="checkbox" t-att-name="'%s_%s_%s' % (prefix, row_label.id, col_label.id)" t-att-value='col_label.id' />
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            </xpath>
+        </template>
+
+        <template id="report_survey_answers_document">
+             <t t-call="web.internal_layout">
+                <t t-set="doc" t-value="doc.with_context({'lang':doc.partner_id.lang})" />
+                <div class="page">
+                    <div class="oe_structure"/>
+                    <div class="row mt32 mb32">
+                       <h3 class="text-center"><t t-esc="doc.survey_id.title"/></h3>
+                       <t t-set="questions" t-value="doc.user_input_line_ids.mapped('question_id')"/>
+                       <!-- <h3 class="text-center"><t t-esc="doc."/></h3> -->
+                       <t t-foreach="questions" t-as="qs">
+                            <t t-if="qs.matrix_subtype == 'custom_row'">
+                                <h4 class="text-center mt16 mb16" t-field="qs.question"/>
+                                <table class="table" style="width:100%;">
+                                    <thead>
+                                        <tr style="width:100%;text-align: center">
+                                            <th style="text-align: center">#</th>
+                                            <t t-foreach="qs.labels_ids" t-as="lb">
+                                            <th style="text-align: center"> <span t-field="lb.value"/></th>
+                                            </t>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <t t-foreach="qs.labels_ids_2" t-as="lb2">
+                                            <tr style="text-align: center">
+                                                <td style="text-align: center"><strong t-field="lb2.value"></strong></td>
+                                                <t t-foreach="qs.labels_ids" t-as="lb">
+                                                    <t t-set="flag" t-value="false"/>
+                                                    <t t-foreach="doc.user_input_line_ids" t-as="ans">
+                                                        <t t-if="ans.value_suggested_row.id == lb2.id">
+                                                            <t t-if="ans.value_suggested.id == lb.id">
+                                                                <td class="text-center">
+                                                                    <t t-if="ans.answer_type == 'text'">
+                                                                        <span t-field="ans.value_text"/>
+                                                                    </t>
+                                                                    <t t-if="ans.answer_type == 'number'">
+                                                                        <span t-field="ans.value_number"/>
+                                                                    </t>
+                                                                    <t t-if="ans.answer_type == 'free_text'">
+                                                                        <span t-field="ans.value_free_text"/>
+                                                                    </t>
+                                                                    <t t-if="ans.answer_type == 'suggestion'">
+                                                                        <span class="fa fa-check"/>
+                                                                    </t>
+                                                                    <t t-if="ans.answer_type == 'dropdown'">
+                                                                        <span t-field="ans.value_dropdown"/>
+                                                                    </t>
+                                                                </td>
+                                                                <t t-set="flag" t-value="true"/>
+                                                            </t>
+                                                        </t>
+                                                    </t>
+                                                    <t t-if="not flag">
+                                                        <td style="text-align: center">
+                                                        </td>
+                                                    </t>
+                                                </t>
+                                            </tr>
+                                        </t>
+                                    </tbody>
+                                </table>
+                            </t>
+                       </t>
+                    </div>
+                </div>
+            </t>
+        </template>
+        <template id="report_survey_answers">
+            <t t-call="web.html_container">
+                <t t-foreach="docs" t-as="doc">
+                    <t t-call="custom_matrix_survey.report_survey_answers_document"/>
+                </t>
+            </t>
+        </template>
+    </data>
+</odoo>

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+   	<record model="ir.ui.view" id="survey_question_custom_form">
+            <field name="name">Form view for survey custom question</field>
+            <field name="model">survey.question</field>
+            <field name="inherit_id" ref="survey.survey_question_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//notebook//page//field[@name='labels_ids']//tree" position="inside">
+                    <field name="type"/>
+                    <field name="dpvalues" widget="many2many_tags" attrs="{'invisible': [('type', '!=', 'dropdown')]}"/>
+                </xpath>
+            </field>
+    </record>
+
+    <record model="ir.ui.view" id="survey_user_input_line_custom_form">
+            <field name="name">survey_user_input_line_custom_form</field>
+            <field name="model">survey.user_input_line</field>
+            <field name="inherit_id" ref="survey.survey_user_input_line_form"/>
+            <field name="arch" type="xml">
+                <field name="value_text" position="after">
+                    <field name="value_dropdown" attrs="{'invisible': [('answer_type','!=','dropdown')]}"/>
+                    <field name="matrix_subtype_id"/>
+                </field>
+                <field name="value_suggested" position="replace">
+                    <field name="value_suggested" colspan='2' attrs="{'invisible': [ ('answer_type','!=','suggestion'), ('matrix_subtype_id', '!=', 'custom_row')]}"/>
+                </field>
+            </field>
+    </record>
+    <report 
+            id="action_view_pdf_answers"
+            string="Answers"
+            model="survey.user_input" 
+            report_type="qweb-pdf"
+            file="custom_matrix_survey.report_survey_answers" 
+            name="custom_matrix_survey.report_survey_answers"
+            print_report_name="'answer - %s' % (object.survey_id.title)"
+        />
+
+    <record model="ir.ui.view" id="survey_user_input_custom_form">
+            <field name="name">survey_user_input_custom_form</field>
+            <field name="model">survey.user_input</field>
+            <field name="inherit_id" ref="survey.survey_user_input_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//form//header//button[@name='action_view_answers']" position="after">
+                    <button name="%(action_view_pdf_answers)d" states="done" string="Print PDF Answers" type="action"  class="oe_highlight" />
+                </xpath>
+            </field>
+    </record>
+</odoo>
