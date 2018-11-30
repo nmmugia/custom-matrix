@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-
+import re
 from odoo import api, fields, models, _
+from odoo.exceptions import UserError
 
 
 def dict_keys_startswith(dictionary, string):
@@ -10,11 +11,15 @@ def dict_keys_startswith(dictionary, string):
     """
     return {k: v for k, v in dictionary.items() if k.startswith(string)}
 
+def dict_keys_endswith_line(dictionary, string1, string2):
+    """ Return dict for user input line, which search the value from the string (ends with string AND not start with string)"""
+    return {k: v for k, v in dictionary.items() if k.endswith(string1) and not k.startswith(string2)}
+
 class SurveyQuestion(models.Model):
     _inherit = 'survey.question'
 
     matrix_subtype = fields.Selection([('simple', 'One choice per row'),
-        ('multiple', 'Multiple choices per row'), ('custom_row', 'Custom Matrix')], string='Matrix Type', default='simple')
+        ('multiple', 'Multiple choices per row'), ('custom_row', 'Custom Matrix'), ('editable_row', 'Editable Row')], string='Matrix Type', default='simple')
 
 class SurveyLabel(models.Model):
     _inherit = 'survey.label'
@@ -108,6 +113,42 @@ class SurveyUserInputLine(models.Model):
                             else:
                                 vals.update({'answer_type': 'suggestion', 'value_suggested': col.id, 'value_suggested_row': row.id})
                             self.create(vals)
+        elif question.matrix_subtype == 'editable_row':
+            label_dict = dict_keys_startswith(post, 'label[')
+            answer_lines = dict_keys_endswith_line(post, ']', 'label[')
+            i = 0
+            for key, val in label_dict.items():
+                label_vals = {
+                    'value': val,
+                    'question_id_2': question.id,
+                    'type': 'checkbox'
+                }
+                label = self.env['survey.label'].create(label_vals)
+                for col in question.labels_ids:
+                    a_tag = "%s_%s_%s" % (answer_tag, label.id, col.id)
+                    col_vals = {k: v for k, v  in  answer_lines.items() if k.endswith('['+str(i)+']')}
+                    for col_val in col_vals:
+                        if a_tag in ca_dict:
+                            # to fix
+                            no_answers = False
+                            if post.get(a_tag): 
+                                sline = a_tag.split('_')[-1]
+                                label_obj = question.labels_ids.browse(int(sline))
+                                if label_obj.type == 'textbox':
+                                    vals.update({'answer_type': 'text', 'value_suggested': col.id, 'value_suggested_row': row.id, 'value_text': post.get(a_tag)})
+                                elif label_obj.type == 'free_text':
+                                    vals.update({'answer_type': 'free_text', 'value_suggested': col.id, 'value_suggested_row': row.id, 'value_free_text': post.get(a_tag)})
+                                elif label_obj.type == 'numerical_box':
+                                    vals.update({'answer_type': 'number', 'value_suggested': col.id, 'value_suggested_row': row.id, 'value_number': post.get(a_tag)})
+                                elif label_obj.type == 'date':
+                                    vals.update({'answer_type': 'date', 'value_suggested': col.id, 'value_suggested_row': row.id, 'value_date': post.get(a_tag)})
+                                elif label_obj.type == 'dropdown':
+                                    vals.update({'answer_type': 'dropdown', 'value_suggested': col.id, 'value_suggested_row': row.id, 'value_dropdown': int(post.get(a_tag))})
+                                else:
+                                    vals.update({'answer_type': 'suggestion', 'value_suggested': col.id, 'value_suggested_row': row.id})
+                                self.create(vals)
+                i += 1
+
 
         if no_answers:
             vals.update({'answer_type': None, 'skipped': True})

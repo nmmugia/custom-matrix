@@ -25,7 +25,7 @@ Custom Matrix Survey.
     'website': "http://www.kanakinfosystems.com",
     'images': ['static/description/banner.jpg'],
     'category': 'Website',
-    'depends': ['survey_crm'],
+    'depends': ['survey_crm', 'web'],
     'data': [
         'security/ir.model.access.csv',
         'views/survey_views.xml',
