@@ -13,12 +13,10 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr t-foreach="question.labels_ids_2" t-as="row_label">
-                        <th t-if="question.matrix_subtype == 'editable_row'"><input type="text" class="form-control" name="label[0]"/></th>
-                        <th t-else=""><span t-field="row_label.value" /></th>
+                    <tr t-if="question.matrix_subtype == 'editable_row' and row_label.user_input_id_2.token == token" t-foreach="question.labels_ids_2" t-as="row_label">
+                        <th t-if="question.matrix_subtype == 'editable_row'"><input type="text" class="form-control" t-att-name="'%s_%s_%s' % (prefix, token, row_label.id)"/></th>
                         <td t-foreach="question.labels_ids" t-as="col_label">
-                            <input t-if="question.matrix_subtype == 'simple'" type="radio" t-att-name="'%s_%s' % (prefix, row_label.id)" t-att-value='col_label.id' />
-                            <t t-if="question.matrix_subtype == 'custom_row'">
+                            <t t-if="question.matrix_subtype == 'editable_row'">
                                 <t t-if="col_label.type == 'textbox'">
                                     <input type="text" class="form-control" t-att-name="'%s_%s_%s' % (prefix, row_label.id, col_label.id)"/>
                                 </t>
@@ -26,7 +24,7 @@
                                     <textarea class="form-control" rows="3" t-att-name="'%s_%s_%s' % (prefix, row_label.id, col_label.id)"></textarea>
                                 </t>
                                 <t t-if="col_label.type == 'numerical_box'">
-                                   <input type="number" step="any" class="form-control" t-att-name="'%s_%s_%s' % (prefix, row_label.id, col_label.id)"/>
+                                   <input type="number" t-att-column="'%s' % (col_label.id)" step="any" class="form-control" t-att-name="'%s_%s_%s' % (prefix, row_label.id, col_label.id)"/>
                                 </t>
                                 <t t-if="col_label.type == 'date'">
                                     <div class='input-group date'>
@@ -45,23 +43,31 @@
                                     <input type="checkbox" t-att-name="'%s_%s_%s' % (prefix, row_label.id, col_label.id)" t-att-value='col_label.id' />
                                 </t>
                             </t>
+                        </td>
+                        <td class="o_list_record_delete">
+                            <button class="fa fa-trash-o o_list_record_delete_btn" onclick="delete_row(this)" type="button"></button>
+                        </td>
+                    </tr>
+                    <tr t-if="question.matrix_subtype == 'editable_row'" style="display: none;" class="new_line">
+                        <th t-if="question.matrix_subtype == 'editable_row'"><input type="text" class="form-control" name="label[0]" new="True"/></th>
+                        <td t-foreach="question.labels_ids" t-as="col_label">
                             <t t-if="question.matrix_subtype == 'editable_row'">
                                 <t t-if="col_label.type == 'textbox'">
-                                    <input type="text" class="form-control" t-att-name="'%s_%s_%s[0]' % (prefix, row_label.id, col_label.id)"/>
+                                    <input type="text" class="form-control" t-att-name="'%s_%s' % (prefix, col_label.id)"/>
                                 </t>
                                 <t t-if="col_label.type == 'free_text'">
-                                    <textarea class="form-control" rows="3" t-att-name="'%s_%s_%s[0]' % (prefix, row_label.id, col_label.id)"></textarea>
+                                    <textarea class="form-control" rows="3" t-att-name="'%s_%s[0]' % (prefix, col_label.id)"></textarea>
                                 </t>
                                 <t t-if="col_label.type == 'numerical_box'">
-                                   <input type="number" step="any" class="form-control" t-att-name="'%s_%s_%s[0]' % (prefix, row_label.id, col_label.id)"/>
+                                   <input type="number" step="any" class="form-control" t-att-column="'%s' % (col_label.id)" t-att-name="'%s_%s[0]' % (prefix, col_label.id)"/>
                                 </t>
                                 <t t-if="col_label.type == 'date'">
                                     <div class='input-group date'>
-                                        <input type="text" date="true" class="form-control date" t-att-name="'%s_%s_%s[0]' % (prefix, row_label.id, col_label.id)"/>
+                                        <input type="text" date="true" class="form-control date" t-att-name="'%s_%s[0]' % (prefix, col_label.id)"/>
                                     </div>
                                 </t>
                                 <t t-if="col_label.type == 'dropdown'">
-                                    <select t-att-name="'%s_%s_%s[0]' % (prefix, row_label.id, col_label.id)" class="form-control" id="seldpbox1">
+                                    <select t-att-name="'%s_%s[0]' % (prefix, col_label.id)" class="form-control" id="seldpbox1">
                                         <option></option>
                                         <t t-foreach="col_label.dpvalues" t-as="dpv">
                                             <option t-att-value="dpv.id"><t t-esc="dpv.name"/></option>
@@ -69,13 +75,49 @@
                                     </select> 
                                 </t>
                                 <t t-if="col_label.type == 'checkbox'">
-                                    <input type="checkbox" t-att-name="'%s_%s_%s[0]' % (prefix, row_label.id, col_label.id)" t-att-value='col_label.id' />
+                                    <input type="checkbox" t-att-name="'%s_%s[0]' % (prefix, col_label.id)" t-att-value='col_label.id' />
+                                </t>
+                            </t>
+                        </td>
+                        <td class="o_list_record_delete non_stored">
+                            <button class="fa fa-trash-o o_list_record_delete_btn" onclick="delete_row(this)" type="button"></button>
+                        </td>
+                    </tr>
+                    <tr t-if="question.matrix_subtype == 'editable_row'"><td class="o_field_x2many_list_row_add"><a href="#">Add an item</a></td></tr>
+                    <tr t-else="" t-foreach="question.labels_ids_2" t-as="row_label">
+                        <th><span t-field="row_label.value" /></th>
+                        <td t-foreach="question.labels_ids" t-as="col_label">
+                            <input t-if="question.matrix_subtype == 'simple'" type="radio" t-att-name="'%s_%s' % (prefix, row_label.id)" t-att-value='col_label.id' />
+                            <t t-if="question.matrix_subtype == 'custom_row'">
+                                <t t-if="col_label.type == 'textbox'">
+                                    <input type="text" class="form-control" t-att-name="'%s_%s_%s' % (prefix, row_label.id, col_label.id)"/>
+                                </t>
+                                <t t-if="col_label.type == 'free_text'">
+                                    <textarea class="form-control" rows="3" t-att-name="'%s_%s_%s' % (prefix, row_label.id, col_label.id)"></textarea>
+                                </t>
+                                <t t-if="col_label.type == 'numerical_box'">
+                                   <input type="number" t-att-column="'%s' % (col_label.id)" step="any" class="form-control" t-att-name="'%s_%s_%s' % (prefix, row_label.id, col_label.id)"/>
+                                </t>
+                                <t t-if="col_label.type == 'date'">
+                                    <div class='input-group date'>
+                                        <input type="text" date="true" class="form-control date" t-att-name="'%s_%s_%s' % (prefix, row_label.id, col_label.id)"/>
+                                    </div>
+                                </t>
+                                <t t-if="col_label.type == 'dropdown'">
+                                    <select t-att-name="'%s_%s_%s' % (prefix, row_label.id, col_label.id)" class="form-control" id="seldpbox1">
+                                        <option></option>
+                                        <t t-foreach="col_label.dpvalues" t-as="dpv">
+                                            <option t-att-value="dpv.id"><t t-esc="dpv.name"/></option>
+                                        </t>
+                                    </select> 
+                                </t>
+                                <t t-if="col_label.type == 'checkbox'">
+                                    <input type="checkbox" t-att-name="'%s_%s_%s' % (prefix, row_label.id, col_label.id)" t-att-value='col_label.id' />
                                 </t>
                             </t>
                             <input t-if="question.matrix_subtype == 'multiple'" type="checkbox" t-att-name="'%s_%s_%s' % (prefix, row_label.id, col_label.id)" t-att-value='col_label.id' />
                         </td>
                     </tr>
-                    <tr><td class="o_field_x2many_list_row_add"><a href="#">Add an item</a></td></tr>
                 </tbody>
             </table>
             </xpath>
