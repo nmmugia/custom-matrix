@@ -180,24 +180,34 @@ class SurveyUserInputLine(models.Model):
                         if rl == int(k.split('[')[0].split('_')[-1]):
                             rl = self.env['survey.label'].search([('id', '=', rl)])
                             rl.write({'value': v})
+                            rl = rl.id
                         if rl == int(k.split('_')[-2]):
                             col_obj = self.env['survey.label'].search([('id', '=', int(k.split('_')[-1]))])
+                            label = self.env['survey.label'].search([('id', '=', int(k.split('_')[-2]))])
                             if col_obj.type == 'textbox':
-                                vals.update({'answer_type': 'text', 'value_suggested': col_obj, 'value_suggested_row': label.id, 'value_text': col_val})
+                                vals.update({'answer_type': 'text', 'value_suggested': col_obj.id, 'value_suggested_row': label.id, 'value_text': v})
                             elif col_obj.type == 'free_text':
-                                vals.update({'answer_type': 'free_text', 'value_suggested': col_obj, 'value_suggested_row': label.id, 'value_free_text': col_val})
+                                vals.update({'answer_type': 'free_text', 'value_suggested': col_obj.id, 'value_suggested_row': label.id, 'value_free_text': v})
                             elif col_obj.type == 'numerical_box':
-                                vals.update({'answer_type': 'number', 'value_suggested': col_obj, 'value_suggested_row': label.id, 'value_number': float(col_val)})
+                                vals.update({'answer_type': 'number', 'value_suggested': col_obj.id, 'value_suggested_row': label.id, 'value_number': float(v)})
                             elif col_obj.type == 'date':
-                                vals.update({'answer_type': 'date', 'value_suggested': col_obj, 'value_suggested_row': label.id, 'value_date': col_val})
+                                vals.update({'answer_type': 'date', 'value_suggested': col_obj.id, 'value_suggested_row': label.id, 'value_date': v})
                             elif col_obj.type == 'dropdown':
-                                vals.update({'answer_type': 'dropdown', 'value_suggested': col_obj, 'value_suggested_row': label.id, 'value_dropdown': int(col_val)})
+                                vals.update({'answer_type': 'dropdown', 'value_suggested': col_obj.id, 'value_suggested_row': label.id, 'value_dropdown': int(v)})
                             else:
-                                vals.update({'answer_type': 'suggestion', 'value_suggested': col_obj, 'value_suggested_row': label.id})
+                                vals.update({'answer_type': 'suggestion', 'value_suggested': col_obj.id, 'value_suggested_row': label.id})
                             self.create(vals)
                     except ValueError:
                         continue
-            raise UserError((test))
+            for rl in row_label.ids:
+                label_list = self.search([('question_id', '=', question.id)])
+                l_list = ()
+                for ll in label_list:
+                    l_list += (ll.value_suggested_row.id,)
+                l_list = set(l_list)
+                if rl not in l_list:
+                    self.env['survey.label'].search([('id', '=', rl)]).sudo().unlink()
+
         if no_answers:
             vals.update({'answer_type': None, 'skipped': True})
             self.create(vals)

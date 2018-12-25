@@ -45,7 +45,7 @@
                             </t>
                         </td>
                         <td class="o_list_record_delete">
-                            <button class="fa fa-trash-o o_list_record_delete_btn" onclick="delete_row(this)" type="button"></button>
+                            <button class="btn btn-danger fa fa-trash-o o_list_record_delete_btn" type="button"></button>
                         </td>
                     </tr>
                     <tr t-if="question.matrix_subtype == 'editable_row'" style="display: none;" class="new_line">
@@ -80,7 +80,7 @@
                             </t>
                         </td>
                         <td class="o_list_record_delete non_stored">
-                            <button class="fa fa-trash-o o_list_record_delete_btn" onclick="delete_row(this)" type="button"></button>
+                            <button class="btn btn-primary fa fa-trash-o o_list_record_delete_btn" type="button"></button>
                         </td>
                     </tr>
                     <tr t-if="question.matrix_subtype == 'editable_row'"><td class="o_field_x2many_list_row_add"><a href="#">Add an item</a></td></tr>
