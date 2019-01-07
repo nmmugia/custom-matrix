@@ -58,7 +58,9 @@ class SurveyUserInputLine(models.Model):
         ('number', 'Number'),
         ('date', 'Date'),
         ('free_text', 'Free Text'),
-        ('suggestion', 'Suggestion'), ('dropdown', 'Dropdown')], string='Answer Type')
+        ('suggestion', 'Suggestion'),
+        ('dropdown', 'Dropdown'),
+        ('attachment', 'Attachment')], string='Answer Type')
 
     value_dropdown = fields.Many2one('dp.attributes.value', string="Value Dropdown")
     matrix_subtype_id = fields.Selection(related='question_id.matrix_subtype', string="Matrix subtype")
