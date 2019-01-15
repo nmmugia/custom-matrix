@@ -17,7 +17,7 @@ class websitesurvey(WebsiteSurvey):
         ret = {}
         # Fetch previous answers
         if page:
-            previous_answers = UserInputLine.sudo().search([('user_input_id.token', '=', token), ('page_id', '=', page.id)])
+            previous_answers = UserInputLine.sudo().search([('user_input_id.token', '=', token)])
             previous_label = Label.sudo().search([('user_input_id_2.token', '=', token)])
         else:
             previous_answers = UserInputLine.sudo().search([('user_input_id.token', '=', token)])
