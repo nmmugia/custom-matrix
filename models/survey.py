@@ -81,21 +81,23 @@ class SurveyUserInputLine(models.Model):
         old_uil.sudo().unlink()
 
         no_answers = True
-        ca_dict = dict_keys_startswith(post, answer_tag + '_')
+        #16_783_18_297_297
+        # ca_dict = dict_keys_startswith(post, answer_tag + '_')
 
-        comment_answer = ca_dict.pop(("%s_%s" % (answer_tag, 'comment')), '').strip()
-        if comment_answer:
-            vals.update({'answer_type': 'text', 'value_text': comment_answer})
-            self.create(vals)
-            no_answers = False
+        # comment_answer = ca_dict.pop(("%s_%s" % (answer_tag, 'comment')), '').strip()
+        # if comment_answer:
+        #     vals.update({'answer_type': 'text', 'value_text': comment_answer})
+        #     self.create(vals)
+        #     no_answers = False
 
         if question.matrix_subtype == 'simple':
             for row in question.labels_ids_2:
-                a_tag = "%s_%s" % (answer_tag, row.id)
-                if a_tag in ca_dict:
-                    no_answers = False
-                    vals.update({'answer_type': 'suggestion', 'value_suggested': ca_dict[a_tag], 'value_suggested_row': row.id})
-                    self.create(vals)
+                # a_tag = "%s_%s" % (answer_tag, row.id)
+                # if a_tag in ca_dict:
+                # raise UserError(([post, ca_dict]))
+                no_answers = False
+                vals.update({'answer_type': 'suggestion', 'value_suggested': post[answer_tag], 'value_suggested_row': row.id})
+                self.create(vals)
 
         elif question.matrix_subtype == 'multiple':
             for col in question.labels_ids:
