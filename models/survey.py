@@ -78,7 +78,6 @@ class SurveyUserInputLine(models.Model):
             ('survey_id', '=', survey_id),
             ('question_id', '=', question.id)
         ])
-        old_uil.sudo().unlink()
 
         no_answers = True
         #16_783_18_297_297
@@ -91,28 +90,39 @@ class SurveyUserInputLine(models.Model):
         #     no_answers = False
 
         if question.matrix_subtype == 'simple':
+            old_uil.sudo().unlink()
             for row in question.labels_ids_2:
                 # a_tag = "%s_%s" % (answer_tag, row.id)
                 # if a_tag in ca_dict:
                 # raise UserError(([post, ca_dict]))
-                no_answers = False
                 vals.update({'answer_type': 'suggestion', 'value_suggested': post[answer_tag], 'value_suggested_row': row.id})
                 self.create(vals)
+            no_answers = False
 
-        elif question.matrix_subtype == 'multiple':
-            for col in question.labels_ids:
-                for row in question.labels_ids_2:
-                    a_tag = "%s_%s_%s" % (answer_tag, row.id, col.id)
-                    if a_tag in ca_dict:
-                        no_answers = False
-                        vals.update({'answer_type': 'suggestion', 'value_suggested': col.id, 'value_suggested_row': row.id})
+        if question.matrix_subtype == 'multiple':
+            if post['checked'] == 'true':
+                if old_uil:
+                    old_val = tuple(ol.value_suggested.id for ol in  old_uil)
+                    if int(post[answer_tag]) not in old_val:
+                        vals.update({'answer_type': 'suggestion', 'answer_type': 'suggestion', 'value_suggested': int(post[answer_tag])})
                         self.create(vals)
+                else:
+                    vals.update({'answer_type': 'suggestion', 'value_suggested': int(post[answer_tag])})
+                    self.create(vals)
+            else:
+                old_uil = self.search([
+                    ('user_input_id', '=', user_input_id),
+                    ('survey_id', '=', survey_id),
+                    ('question_id', '=', question.id),
+                    ('value_suggested', '=', int(post[answer_tag]))
+                ])
+                old_uil.sudo().unlink()
+            no_answers = False
         elif question.matrix_subtype == 'custom_row':
             for col in question.labels_ids:
                 for row in question.labels_ids_2:
                     a_tag = "%s_%s_%s" % (answer_tag, row.id, col.id)
                     if a_tag in ca_dict:
-                        no_answers = False
                         if post.get(a_tag): 
                             sline = a_tag.split('_')[-1]
                             label_obj = question.labels_ids.browse(int(sline))
@@ -129,6 +139,7 @@ class SurveyUserInputLine(models.Model):
                             else:
                                 vals.update({'answer_type': 'suggestion', 'value_suggested': col.id, 'value_suggested_row': row.id})
                             self.create(vals)
+            no_answers = False
         elif question.matrix_subtype == 'editable_row':
             label_dict = dict_keys_startswith(post, 'label[')
             answer_lines = dict_keys_endswith_line(post, ']', 'label[')
@@ -211,8 +222,4 @@ class SurveyUserInputLine(models.Model):
                 l_list = set(l_list)
                 if rl not in l_list:
                     self.env['survey.label'].search([('id', '=', rl)]).sudo().unlink()
-
-        if no_answers:
-            vals.update({'answer_type': None, 'skipped': True})
-            self.create(vals)
         return True
