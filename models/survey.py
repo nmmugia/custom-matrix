@@ -119,26 +119,36 @@ class SurveyUserInputLine(models.Model):
                 old_uil.sudo().unlink()
             no_answers = False
         elif question.matrix_subtype == 'custom_row':
-            for col in question.labels_ids:
-                for row in question.labels_ids_2:
-                    a_tag = "%s_%s_%s" % (answer_tag, row.id, col.id)
-                    if a_tag in ca_dict:
-                        if post.get(a_tag): 
-                            sline = a_tag.split('_')[-1]
-                            label_obj = question.labels_ids.browse(int(sline))
-                            if label_obj.type == 'textbox':
-                                vals.update({'answer_type': 'text', 'value_suggested': col.id, 'value_suggested_row': row.id, 'value_text': post.get(a_tag)})
-                            elif label_obj.type == 'free_text':
-                                vals.update({'answer_type': 'free_text', 'value_suggested': col.id, 'value_suggested_row': row.id, 'value_free_text': post.get(a_tag)})
-                            elif label_obj.type == 'numerical_box':
-                                vals.update({'answer_type': 'number', 'value_suggested': col.id, 'value_suggested_row': row.id, 'value_number': post.get(a_tag)})
-                            elif label_obj.type == 'date':
-                                vals.update({'answer_type': 'date', 'value_suggested': col.id, 'value_suggested_row': row.id, 'value_date': post.get(a_tag)})
-                            elif label_obj.type == 'dropdown':
-                                vals.update({'answer_type': 'dropdown', 'value_suggested': col.id, 'value_suggested_row': row.id, 'value_dropdown': int(post.get(a_tag))})
-                            else:
-                                vals.update({'answer_type': 'suggestion', 'value_suggested': col.id, 'value_suggested_row': row.id})
-                            self.create(vals)
+            # answer_tag ,row, col
+            sline = answer_tag.split('_')
+            label_obj = question.labels_ids.browse(int(sline[-1]))
+            old_uil = self.search([
+                ('user_input_id', '=', user_input_id),
+                ('survey_id', '=', survey_id),
+                ('question_id', '=', question.id),
+                ('value_suggested', '=', int(sline[-1])),
+                ('value_suggested_row', '=', int(sline[-2]))
+            ])
+            old_uil.sudo().unlink()
+            if label_obj.type == 'textbox':
+                vals.update({'answer_type': 'text', 'value_suggested': int(sline[-1]), 'value_suggested_row': int(sline[-2]), 'value_text': post.get(answer_tag)})
+            elif label_obj.type == 'free_text':
+                vals.update({'answer_type': 'free_text', 'value_suggested': int(sline[-1]), 'value_suggested_row': int(sline[-2]), 'value_free_text': post.get(answer_tag)})
+            elif label_obj.type == 'numerical_box':
+                vals.update({'answer_type': 'number', 'value_suggested': int(sline[-1]), 'value_suggested_row': int(sline[-2]), 'value_number': post.get(answer_tag)})
+            elif label_obj.type == 'date':
+                vals.update({'answer_type': 'date', 'value_suggested': int(sline[-1]), 'value_suggested_row': int(sline[-2]), 'value_date': post.get(answer_tag)})
+            elif label_obj.type == 'dropdown':
+                vals.update({'answer_type': 'dropdown', 'value_suggested': int(sline[-1]), 'value_suggested_row': int(sline[-2]), 'value_dropdown': int(post.get(answer_tag))})
+            else:
+                vals.update({'answer_type': 'suggestion', 'value_suggested': int(sline[-1]), 'value_suggested_row': int(sline[-2])})
+            try:
+                if post['checked'] == 'false':
+                    old_uil.sudo().unlink()
+                else:
+                    self.create(vals)
+            except KeyError:
+                self.create(vals)
             no_answers = False
         elif question.matrix_subtype == 'editable_row':
             label_dict = dict_keys_startswith(post, 'label[')
